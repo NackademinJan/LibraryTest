@@ -150,7 +150,7 @@ public class PostTest {
     }
     
     
-     @Test 
+    @Test 
     public void testPostBookWithAuthor(){
         BookOperations bookOperations = new BookOperations();
         AuthorOperations authorOperations = new AuthorOperations();
@@ -166,15 +166,24 @@ public class PostTest {
         String expectedTitle = from(bookOperations.getLatestJsonString()).getString("book.title");
         String expectedDescription = from(bookOperations.getLatestJsonString()).getString("book.description");
         String expectedIsbn = from(bookOperations.getLatestJsonString()).getString("book.isbn");
+        Integer expectedNbOfPage = from(bookOperations.getLatestJsonString()).getInt("book.nbOfPage");
+        String expectedAuthorName = from(bookOperations.getLatestJsonString()).getString("book.author.name");
+        Integer expectedAuthorId = from(bookOperations.getLatestJsonString()).getInt("book.author.id");
         
-        Response getResponse = new BookOperations().getAllBooks();
-        String fetchedTitle = getResponse.jsonPath().getString("books.book[-1].title");
-        String fetchedDescription = getResponse.jsonPath().getString("books.book[-1].description");
-        String fetchedIsbn = getResponse.jsonPath().getString("books.book[-1].isbn");
+        Response verifyResponse = new BookOperations().getAllBooks();
+        String verifyTitle = verifyResponse.jsonPath().getString("books.book[-1].title");
+        String verifyDescription = verifyResponse.jsonPath().getString("books.book[-1].description");
+        String verifyIsbn = verifyResponse.jsonPath().getString("books.book[-1].isbn");
+        Integer verifyNbOfPage = verifyResponse.jsonPath().getInt("books.book[-1].nbOfPage");
+        String verifyAuthorName = verifyResponse.jsonPath().getString("books.book[-1].author.name");
+        Integer verifyAuthorId = verifyResponse.jsonPath().getInt("books.book[-1].author.id");
         
-        assertEquals(expectedTitle, fetchedTitle);
-        assertEquals(expectedDescription, fetchedDescription);
-        assertEquals(expectedIsbn, fetchedIsbn);      
+        assertEquals(expectedTitle, verifyTitle);
+        assertEquals(expectedDescription, verifyDescription);
+        assertEquals(expectedIsbn, verifyIsbn);
+        assertEquals(expectedNbOfPage, verifyNbOfPage); 
+        assertEquals(expectedAuthorName, verifyAuthorName); 
+        assertEquals(expectedAuthorId, verifyAuthorId); 
         
         Response deleteResponse = new BookOperations().deleteLastBook();
         assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
@@ -271,7 +280,7 @@ public class PostTest {
     
     @Test
     public void testForbiddenPostToBooksByAuthorAuthorId(){
-        String resourceName = "books/byauthor"+GlobVar.mockAuthorId;
+        String resourceName = "books/byauthor/"+GlobVar.mockAuthorId;
         Response response = given().accept(ContentType.JSON).post(GlobVar.BASE_URL+resourceName);
         assertEquals("The status code should be: 405, method not allowed",  405, response.statusCode());
         assertEquals("response body should be blank",  "", response.body().print());

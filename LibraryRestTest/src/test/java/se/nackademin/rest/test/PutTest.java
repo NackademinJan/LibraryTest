@@ -165,7 +165,7 @@ public class PutTest {
     
     @Test
     public void testForbiddenPutToBooksByAuthorAuthorId(){
-        String resourceName = "books/byauthor"+GlobVar.mockAuthorId;
+        String resourceName = "books/byauthor/"+GlobVar.mockAuthorId;
         Response response = given().accept(ContentType.JSON).put(GlobVar.BASE_URL+resourceName);
         assertEquals("The status code should be: 405, method not allowed",  405, response.statusCode());
         assertEquals("response body should be blank",  "", response.body().print());

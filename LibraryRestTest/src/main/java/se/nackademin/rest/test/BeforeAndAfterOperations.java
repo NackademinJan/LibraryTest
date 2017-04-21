@@ -20,12 +20,12 @@ public class BeforeAndAfterOperations {
     
     public static Response makeMockBookAndMockAuthor(){
         Response postBookResponse = new BookOperations().createBookWithInput(GlobVar.mockBookDescription, GlobVar.mockBookIsbn, GlobVar.mockBookNbOfPage, GlobVar.mockBookTitle);
-        //if(!( 201 == postBookResponse.getStatusCode() )) return postBookResponse;
+        if(!( 201 == postBookResponse.getStatusCode() )) return postBookResponse;
         Response lastBookResponse = new BookOperations().getAllBooks();
         GlobVar.mockBookId = lastBookResponse.jsonPath().getInt("books.book[-1].id");
         
         Response postAuthorResponse = new AuthorOperations().createAuthor(GlobVar.mockAuthorName);
-        //if(!( 201 == postAuthorResponse.getStatusCode() )) return postAuthorResponse;
+        if(!( 201 == postAuthorResponse.getStatusCode() )) return postAuthorResponse;
         Response authorResponse = new AuthorOperations().getAllAuthors();
         GlobVar.mockAuthorId = authorResponse.jsonPath().getInt("authors.author[-1].id");
         return postAuthorResponse;
