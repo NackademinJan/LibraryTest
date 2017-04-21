@@ -25,7 +25,7 @@ import se.nackademin.rest.test.model.SingleBook;
  */
 public class DeleteTest {
     
-        @BeforeClass
+    @BeforeClass //this method creates a dummy book, dummy author and adds the author to the book to be used during test executions
     public static void MaketheMockBookAndMockAuthor(){
         Response makeMocksResponse = BeforeAndAfterOperations.makeMockBookAndMockAuthor();
         assertEquals("The status code should be: 201",  201, makeMocksResponse.statusCode());
@@ -36,7 +36,7 @@ public class DeleteTest {
         assertEquals("response body should be blank",  "", addMockAuthorToMockBook.body().print());
     }
     
-    @AfterClass
+    @AfterClass //this method removes the dummies created by the previous method
     public static void RemovetheMockBookAndMockAuthor(){
         Response removeResponse = BeforeAndAfterOperations.removeTestBookAndTestAuthor();
         assertEquals("The status code should be: 204",  204, removeResponse.statusCode());  
@@ -89,7 +89,7 @@ public class DeleteTest {
         assertEquals(expectedAuthorName, verifyAuthorName); 
         assertEquals(expectedAuthorId, verifyAuthorId); 
         
-        //everything before this line verifies that we have created a new book with attatched author that we can then try to delete.
+        //everything before this line creates and verifies that we have created a new book with attatched author that we can then try to delete.
         
         //the part below tries to delete the book if one was created
         if(postResponse.statusCode() == 201){
@@ -136,7 +136,7 @@ public class DeleteTest {
         assertEquals(expectedIsbn, verifyIsbn);
         assertEquals(expectedNbOfPage, verifyNbOfPage); 
         
-        //everything before this line verifies that we have created a new book that we can then try to delete
+        //everything before this line creates and verifies that we have created a new book that we can then try to delete
         
         //the part below tries to delete the book if one was created
         if(postResponse.statusCode() == 201){
@@ -164,9 +164,9 @@ public class DeleteTest {
         
         //the part below tries to delete a book if that book does not exist in the system
         if(verifyNoBookResponse.statusCode() == 404){
-        Response deleteResponse = new BookOperations().deleteBook(nonExistingBookId);
-        assertEquals("The status code should be: 404",  404, deleteResponse.statusCode());
-        assertEquals("response body should be blank",  "", deleteResponse.body().print());
+            Response deleteResponse = new BookOperations().deleteBook(nonExistingBookId);
+            assertEquals("The status code should be: 404",  404, deleteResponse.statusCode());
+            assertEquals("response body should be blank",  "", deleteResponse.body().print());
         }
     }
     
@@ -206,24 +206,25 @@ public class DeleteTest {
         assertEquals("status code should be 201",  201, postResponse.statusCode());
         assertEquals("response body should be blank", "", postResponse.body().print());
         
-        String expectedName = from(authorOperations.getLatestJsonString()).getString("author.name");
+        String expectedAuthorName = from(authorOperations.getLatestJsonString()).getString("author.name");
         
         Response getResponse = authorOperations.getAllAuthors();
         String verifyAuthorName = getResponse.body().jsonPath().getString("authors.author[-1].name");
-        assertEquals(expectedName, verifyAuthorName);
+        
+        assertEquals(expectedAuthorName, verifyAuthorName);
         
         
         //this part above verifies that we have created an author and, if so, tries to delete it
         if(postResponse.statusCode() == 201){
-        Integer verifyAuthorId = getResponse.body().jsonPath().getInt("authors.author[-1].id");
-        Response delResponse = authorOperations.deleteAuthor(verifyAuthorId);
-        assertEquals("status code should be 204",  204, delResponse.statusCode());
-        assertEquals("response body should be blank", "", delResponse.body().print());
+            Integer verifyAuthorId = getResponse.body().jsonPath().getInt("authors.author[-1].id");
+            Response delResponse = authorOperations.deleteAuthor(verifyAuthorId);
+            assertEquals("status code should be 204",  204, delResponse.statusCode());
+            assertEquals("response body should be blank", "", delResponse.body().print());
         
-        //the part below verifies that the author is gone
-        Response postDeleteAuthorResponse = new AuthorOperations().getAuthor(verifyAuthorId);
-        assertEquals("The status code should be: 404",  404, postDeleteAuthorResponse.statusCode());
-        assertEquals("response body should be blank",  "", postDeleteAuthorResponse.body().print());
+            //the part below verifies that the author is gone
+            Response postDeleteAuthorResponse = new AuthorOperations().getAuthor(verifyAuthorId);
+            assertEquals("The status code should be: 404",  404, postDeleteAuthorResponse.statusCode());
+            assertEquals("response body should be blank",  "", postDeleteAuthorResponse.body().print());
         }
     }
     
@@ -239,8 +240,8 @@ public class DeleteTest {
         //the part below tries to delete a book if that book does not exist in the system
         if(verifyNoAuthorResponse.statusCode() == 404){
             Response deleteResponse = new AuthorOperations().deleteAuthor(nonExistingAuthorId);
-        assertEquals("The status code should be: 404",  404, deleteResponse.statusCode());
-        assertEquals("response body should be blank",  "", deleteResponse.body().print());
+            assertEquals("The status code should be: 404",  404, deleteResponse.statusCode());
+            assertEquals("response body should be blank",  "", deleteResponse.body().print());
         }
         
     }

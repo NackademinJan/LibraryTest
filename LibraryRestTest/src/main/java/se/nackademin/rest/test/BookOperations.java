@@ -11,6 +11,7 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.Response;
 import java.util.Random;
 import java.util.UUID;
+import se.nackademin.rest.test.model.AllBooks;
 import se.nackademin.rest.test.model.Book;
 import se.nackademin.rest.test.model.SingleBook;
 
@@ -21,34 +22,42 @@ import se.nackademin.rest.test.model.SingleBook;
 public class BookOperations {
     private String jsonString = "";
     
-    
+    //this method gets a list of all books as a json style response
     public Response getAllBooks(){
         String resourceName = "books";
         Response getResponse = given().accept(ContentType.JSON).get(GlobVar.BASE_URL + resourceName);
         return getResponse;
     }
-    public Response getBookById(int id){
-        String resourceName = "books/"+id;
+    //this method gets a list of all books as an instance of my AllBooks.class
+    public AllBooks fetchAllBooks(){
+        AllBooks books = given().accept(ContentType.JSON).get(GlobVar.BASE_URL+"books").jsonPath().getObject("books", AllBooks.class);
+        return books;
+    }
+    //this method gets a json style response of a specific book
+    public Response getBookById(Integer bookId){
+        String resourceName = "books/"+bookId;
         Response response = given().accept(ContentType.JSON).get(GlobVar.BASE_URL+resourceName);
         return response;
     }
-    
-    public Book fetchBookById(int id){
-        Book fetchBook = given().accept(ContentType.JSON).get(GlobVar.BASE_URL+"books/"+id).jsonPath().getObject("book", Book.class);
+    //this method is essentially the same as getBookById exept it returns an instance of book.class instead of a Response
+    public Book fetchBookById(Integer bookId){
+        Book fetchBook = given().accept(ContentType.JSON).get(GlobVar.BASE_URL+"books/"+bookId).jsonPath().getObject("book", Book.class);
         return  fetchBook;
     }
     
-    public Response getBookByAuthor(int id){
-        String resourceName = "books/byauthor/"+id;
+    //this method gets one more books written by a specific author as a json style response
+    public Response getBookByAuthor(Integer authorId){
+        String resourceName = "books/byauthor/"+authorId;
         Response response = given().accept(ContentType.JSON).get(GlobVar.BASE_URL+resourceName);
         return response;
     }
-    public Response getAuthorByBook(int id){
-        String resourceName = "books/"+id+"/authors";
+    //this method gets one more authors who wrote a specific book as a json style response
+    public Response getAuthorByBook(Integer bookId){
+        String resourceName = "books/"+bookId+"/authors";
         Response response = given().accept(ContentType.JSON).get(GlobVar.BASE_URL+resourceName);
         return response;
     }
-    
+    //this method adds one specific author to one specifik book as an author of that book and returns a json style response of the results
     public Response addAuthorToBook(String authorName, Integer authorId, Integer bookId){
         String resourceName = "books/"+bookId+"/authors";
         
@@ -67,8 +76,8 @@ public class BookOperations {
         Response postResponse = given().contentType(ContentType.JSON).body(postBody).post(GlobVar.BASE_URL + resourceName);
         return postResponse;
     }
-    
-    public Response addAuthorToBookWithoutAuthorId(String authorName, Integer bookId){
+    // this method should always produce a response with statuscode 400, it should not successfully post a book because the post request does not include an authorId
+    public Response invalidAddAuthorToBookWithoutAuthorId(String authorName, Integer bookId){
         String resourceName = "books/"+bookId+"/authors";
          
         String postBodyTemplate = 
@@ -83,7 +92,7 @@ public class BookOperations {
         Response postResponse = given().contentType(ContentType.JSON).body(postBody).post(GlobVar.BASE_URL + resourceName);
         return postResponse;
     }
-    //This class is createBookWithInput using the Book.java class, need to make a author.java class to help handle author objects
+    //This method is equivalent to createBookWithInput but using Book.class and related methods, still returns a json style response
     public Response makeBookWithInput(String description, String isbn, Integer nbOfPage, String title){
         Book book = new Book();
         book.setDescription(description);
@@ -94,6 +103,7 @@ public class BookOperations {
         Response postBookResponse = given().contentType(ContentType.JSON).body(singleBook).post(GlobVar.BASE_URL+"books");
         return postBookResponse;
     }
+    //this method creates a book using given values for description, isbn, pagecount and title and returns a jsonstyle response of the results
     public Response createBookWithInput(String description, String isbn, Integer nbOfPage, String title){
         String resourceName = "books";
         String postBodyTemplate = 
@@ -111,8 +121,8 @@ public class BookOperations {
         Response postResponse = given().contentType(ContentType.JSON).body(postBody).post(GlobVar.BASE_URL + resourceName);
         return postResponse;
     }
-    
-        public Response createBookWithInputAndId(Integer Id, String description, String isbn, Integer nbOfPage, String title){
+    //this method creates a book using input values for a specified bookId, description, isbn, pagecount and title and returns a jsonstyle response of the results
+    public Response createBookWithInputAndId(Integer bookId, String description, String isbn, Integer nbOfPage, String title){
         String resourceName = "books";
         String postBodyTemplate = 
                         "{\n" 
@@ -125,13 +135,14 @@ public class BookOperations {
                     +   "    \"id\":%s\n"
                     +   "  }\n" 
                     +   "}";
-        String postBody= String.format(postBodyTemplate, description, isbn, nbOfPage, title, Id);
+        String postBody= String.format(postBodyTemplate, description, isbn, nbOfPage, title, bookId);
         jsonString = postBody;
         Response postResponse = given().contentType(ContentType.JSON).body(postBody).post(GlobVar.BASE_URL + resourceName);
         return postResponse;
     }
     
-    //author must have been created prior to running this method)
+    //the author sent with parameters must have been created prior to running this method
+    ////this method creates a book using input values for a description, isbn, pagecount, title and also an author name and authorId. Then returns a jsonstyle response of the results
     public Response createBookWithAuthor(String description, String isbn, Integer nbOfPage, String title, String authorName, Integer authorId){
         String resourceName = "books";
         
@@ -158,7 +169,7 @@ public class BookOperations {
         return postResponse;        
     }
     
-    // this method should always produce a response with statuscode 400, it should not successfully post a book
+    // this method should always produce a response with statuscode 400, it should not successfully post a book because the post request does not include an authorId
     public Response invalidCreateBookWithAuthorNameButNoAuthorId(String description, String isbn, Integer nbOfPage, String title, String authorName){
         String resourceName = "books";
         
@@ -183,7 +194,7 @@ public class BookOperations {
         Response postResponse = given().contentType(ContentType.JSON).body(postBody).post(GlobVar.BASE_URL + resourceName);
         return postResponse;        
     }
-    
+    //this method attempts to create a book with no specific id or author using randomized variables for  title, description, isbn and pagecount and returns a json style response of the results
     public Response createRandomBook(){
         String resourceName = "books";
         String title = UUID.randomUUID().toString();
@@ -206,28 +217,27 @@ public class BookOperations {
         Response postResponse = given().contentType(ContentType.JSON).body(postBody).post(GlobVar.BASE_URL + resourceName);
         return postResponse;
     }
-    //the below method will not work due to the api not supporting creating  a book with an author and author id regardless if they exist already or not in defiance of documentation
+    //this method attempts to create a book with no specific id using randomized variables for  title, description, isbn and pagecount but uses provided inputs for author name and author id because you cannot add a book with an author if the author does not exist in the system already. it then returns a json style response of the results
     public Response createRandomBookWithAuthor(String authorName, Integer authorId){
         String resourceName = "books";
         String title = UUID.randomUUID().toString();
         String description = UUID.randomUUID().toString();
         String isbn = UUID.randomUUID().toString();
         String name = authorName;
-        Integer id = (int)authorId;
         
         String postBodyTemplate = 
                         "{\n" 
                     +   "\"book\":\n" 
                     +   "  {\n" 
+                    +   "    \"description\":\"%s\",\n" 
+                    +   "    \"isbn\":\"%s\",\n" 
+                    +   "    \"nbOfPage\":\"%s\",\n"
+                    +   "    \"title\":\"%s\",\n" 
                     +   "    \"author\":\n" 
                     +   "    {\n" 
                     +   "      \"name\":\"%s\",\n" 
                     +   "      \"id\":%s\n" 
                     +   "    }\n" 
-                    +   "    \"description\":\"%s\",\n" 
-                    +   "    \"isbn\":\"%s\",\n" 
-                    +   "    \"nbOfPage\":\"%s\",\n"
-                    +   "    \"title\":\"%s\"\n" 
                     +   "  }\n" 
                     +   "}";
                 
@@ -237,7 +247,7 @@ public class BookOperations {
         return postResponse;        
     }
     
-    
+    //this method attempts to do a put-request on a book specified by the bookId using input values for description, isbn, pagecount, title, author name and author id and returns a json style response of the results
     public Response updateBookWithAuthor(Integer bookId, String description, String isbn, Integer nbOfPage, String title, String authorName, Integer authorId){
         String resourceName = "books";
         
@@ -264,7 +274,7 @@ public class BookOperations {
         Response putResponse = given().contentType(ContentType.JSON).body(putBody).put(GlobVar.BASE_URL + resourceName);
         return putResponse;        
     }
-     // this method should always produce a response with statuscode 400, it should not successfully update a book
+     // this method should always produce a response with statuscode 400, it should not successfully update a book because the put-request does not include an authorId
     public Response invalidUpdateBookWithAuthorButNoAuthorId(Integer bookId, String description, String isbn, Integer nbOfPage, String title, String authorName){
         String resourceName = "books";
         
@@ -290,7 +300,7 @@ public class BookOperations {
         Response putResponse = given().contentType(ContentType.JSON).body(putBody).put(GlobVar.BASE_URL + resourceName);
         return putResponse;        
     }
-    
+    //this method attempts to do a put-request on a book with inputs for authorName and authorId
     public Response updateABooksAuthors(Integer bookId, String authorName, Integer authorId){
         String resourceName = "books/" +bookId+ "/authors";
         
@@ -310,7 +320,7 @@ public class BookOperations {
         Response putResponse = given().contentType(ContentType.JSON).body(putBody).put(GlobVar.BASE_URL + resourceName);
         return putResponse;        
     }
-    
+    // this method should always produce a response with statuscode 400, it should not successfully update a book because the put-request does not include an authorId
     public Response invalidUpdateABooksAuthors(Integer bookId, String authorName){
         String resourceName = "books/" +bookId+ "/authors";
         
@@ -329,34 +339,34 @@ public class BookOperations {
         Response putResponse = given().contentType(ContentType.JSON).body(putBody).put(GlobVar.BASE_URL + resourceName);
         return putResponse;        
     }
-    
+    //this method returns the latest itteration of this bookoperation's jsonString variable as a String
     public String getLatestJsonString(){
         return jsonString;
     }
-    
+    //this method gets the last book in the list and returns it as an instance of the book.class
     public Book fetchLastBook(){
         Response getResponse = new BookOperations().getAllBooks();
-        int fetchlastBookId = getResponse.jsonPath().getInt("books.book[-1].id");
+        Integer fetchlastBookId = getResponse.jsonPath().getInt("books.book[-1].id");
         Book fetchBook = given().accept(ContentType.JSON).get(GlobVar.BASE_URL+"books/"+fetchlastBookId).jsonPath().getObject("book", Book.class);
         return  fetchBook;
     }
-    
+    //this method gets the last book in the list and returns it as a json style response
     public Response getLastBook(){
         Response getResponse = new BookOperations().getAllBooks();
-        int lastBookId = getResponse.jsonPath().getInt("books.book[-1].id");
+        Integer lastBookId = getResponse.jsonPath().getInt("books.book[-1].id");
         Response lastBookResponse = new BookOperations().getBookById(lastBookId);
         return  lastBookResponse;
     }
-    
+    //this method deletes the last book in the list and returns a json style response of the results
     public Response deleteLastBook(){   
         Response getResponse = new BookOperations().getAllBooks();
-        int deleteLastBookId = getResponse.jsonPath().getInt("books.book[-1].id");
+        Integer deleteLastBookId = getResponse.jsonPath().getInt("books.book[-1].id");
         Response deleteLastBookResponse = new BookOperations().deleteBook(deleteLastBookId);
         return deleteLastBookResponse;
     }
-    
-    public Response deleteBook(int id){
-        String deleteResourceName = "books/"+id;
+    //this method deletes a book that has the specified bookId and returns a json style response of the results
+    public Response deleteBook(Integer bookId){
+        String deleteResourceName = "books/"+bookId;
         
         Response deleteResponse = delete(GlobVar.BASE_URL + deleteResourceName);
         return deleteResponse;

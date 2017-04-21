@@ -11,6 +11,8 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.Response;
 import java.util.Random;
 import java.util.UUID;
+import se.nackademin.rest.test.model.AllAuthors;
+import se.nackademin.rest.test.model.Author;
 
 /**
  *
@@ -25,13 +27,24 @@ public class AuthorOperations {
         Response getResponse = given().accept(ContentType.JSON).get(GlobVar.BASE_URL + resourceName);
         return getResponse;
     }
-    public Response getAuthor(int id){
-        String resourceName = "authors/"+id;
+    
+    public AllAuthors fetchAllAuthors(){
+        AllAuthors authors = given().accept(ContentType.JSON).get(GlobVar.BASE_URL+"authors").jsonPath().getObject("authors", AllAuthors.class);
+        return authors;
+    }
+    
+    public Response getAuthor(Integer authorId){
+        String resourceName = "authors/"+authorId;
         Response response = given().accept(ContentType.JSON).get(GlobVar.BASE_URL+resourceName);
         return response;
     }
-   
-    public Response createAuthor(String name){
+    
+    public Author fetchAuthor(Integer  authorId){
+        Author author = given().accept(ContentType.JSON).get(GlobVar.BASE_URL+"authors/"+authorId).jsonPath().getObject("author", Author.class);
+        return author;
+    }
+    
+    public Response createAuthor(String authorName){
         String resourceName = "authors";
         
         
@@ -43,15 +56,13 @@ public class AuthorOperations {
                     +   "    \"name\":\"%s\",\n" 
                     +   "  }\n" 
                     +   "}";
-        String postBody= String.format(postBodyTemplate, name);
+        String postBody= String.format(postBodyTemplate, authorName);
         jsonString = postBody;
         Response postResponse = given().contentType(ContentType.JSON).body(postBody).post(GlobVar.BASE_URL + resourceName);
         return postResponse;
     }
     
-    
-    
-    public Response createAuthorWithId(String name, Integer id){
+    public Response createAuthorWithId(String authorName, Integer authorId){
         String resourceName = "authors";
         
         
@@ -64,7 +75,7 @@ public class AuthorOperations {
                     +   "    \"id\":%s\n"
                     +   "  }\n" 
                     +   "}";
-        String postBody= String.format(postBodyTemplate, name, id);
+        String postBody= String.format(postBodyTemplate, authorName, authorId);
         jsonString = postBody;
         Response postResponse = given().contentType(ContentType.JSON).body(postBody).post(GlobVar.BASE_URL + resourceName);
         return postResponse;
@@ -127,6 +138,7 @@ public class AuthorOperations {
         Response putResponse = given().contentType(ContentType.JSON).body(putBody).put(GlobVar.BASE_URL + resourceName);
         return putResponse;
     }
+    
     // this method should always return status code 400 and should not update an author
     public Response invalidUpdateAuthorWithoutAuthorId(String authorName){
         String resourceName = "authors";
@@ -146,6 +158,7 @@ public class AuthorOperations {
         return putResponse;
     }
     
+    
     public Response deleteLastAuthor(){   
         Response getResponse = new AuthorOperations().getAllAuthors();
         int fetchedId = getResponse.jsonPath().getInt("authors.author[-1].id");
@@ -153,12 +166,13 @@ public class AuthorOperations {
         return deleteResponse;
     }
     
-    public Response deleteAuthor(int id){
-        String deleteResourceName = "authors/"+id;
+    public Response deleteAuthor(int authorId){
+        String deleteResourceName = "authors/"+authorId;
         
         Response deleteResponse = delete(GlobVar.BASE_URL + deleteResourceName);
         return deleteResponse;
     }
+    
     
     public String getLatestJsonString(){
         return jsonString;

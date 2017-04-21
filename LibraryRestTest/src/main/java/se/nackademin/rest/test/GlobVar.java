@@ -11,13 +11,13 @@ package se.nackademin.rest.test;
  */
 public class GlobVar {
     public static final String BASE_URL = "http://localhost:8080/librarytest/rest/";
+    
     public static Integer mockBookId;
     public static Integer mockAuthorId;
     public static String mockAuthorName = "MockyAuthorName";
-    public static String secondmockAuthorName = "AnotherMockyAuthorName";
+    public static String secondMockAuthorName = "AnotherMockyAuthorName";
     public static Integer thirdMockAuthorId;
     public static String thirdMockAuthorName = "AndYetAThirdMockyAuthorName";
-    
     
     public static String mockBookDescription = "MockyTestDescription";
     public static String mockBookTitle = "MockyTestTitle";
@@ -29,7 +29,6 @@ public class GlobVar {
     public static String secondMockBookIsbn = "AnotherMockyIsbn";
     public static Integer secondMockBookNbOfPage = 123123;
     
-    public static String secondMockAuthorName = "AnotherMockyAuthorName";
     
     
 }

@@ -29,7 +29,7 @@ public class PutTest {
     public PutTest() {
     }
         
-    @BeforeClass
+    @BeforeClass //this method creates a dummy book, dummy author and adds the author to the book to be used during test executions
     public static void MaketheMockBookAndMockAuthor(){
         Response makeMocksResponse = BeforeAndAfterOperations.makeMockBookAndMockAuthor();
         assertEquals("The status code should be: 201",  201, makeMocksResponse.statusCode());
@@ -40,7 +40,7 @@ public class PutTest {
         assertEquals("response body should be blank",  "", addMockAuthorToMockBook.body().print());
     }
     
-    @AfterClass
+    @AfterClass //this method removes the dummies created by the previous method
     public static void RemovetheMockBookAndMockAuthor(){
         Response removeResponse = BeforeAndAfterOperations.removeTestBookAndTestAuthor();
         assertEquals("The status code should be: 204",  204, removeResponse.statusCode());  
@@ -133,23 +133,24 @@ public class PutTest {
     
     //@Test //This test currently returns 200 and somehow produces a new author with the given id and name which should NOT happen!!!
     public void testInvalidPutBookWithNewAuthorNotPreviouslyExistingInSystem(){
-        Integer newBookId = GlobVar.mockBookId;
-        Integer newAuthorId = GlobVar.mockAuthorId + 1000;
-        String newAuthorName = GlobVar.secondMockAuthorName;
+        Integer BookId = GlobVar.mockBookId;
+        Integer badAuthorId = GlobVar.mockAuthorId + 1000;
+        String badAuthorName = GlobVar.secondMockAuthorName;
         
-        Response response = new BookOperations().updateBookWithAuthor(newBookId, GlobVar.secondMockBookDescription, GlobVar.secondMockBookIsbn, GlobVar.secondMockBookNbOfPage, GlobVar.secondMockBookTitle, newAuthorName, newAuthorId);
+        Response response = new BookOperations().updateBookWithAuthor(BookId, GlobVar.secondMockBookDescription, GlobVar.secondMockBookIsbn, GlobVar.secondMockBookNbOfPage, GlobVar.secondMockBookTitle, badAuthorName, badAuthorId);
         
         assertEquals("The status code should be: 400",  400, response.statusCode());
         assertEquals("response body should be blank", "", response.body().print());
+        
         
     }
     
     @Test 
     public void testInvalidPutBookWithNewAuthorPreviouslyExistingInSystemButNoAuthorId(){
-        Integer newBookId = GlobVar.mockBookId;
-        String newAuthorName = GlobVar.secondMockAuthorName;
+        Integer BookId = GlobVar.mockBookId;
+        String AuthorName = GlobVar.secondMockAuthorName;
         
-        Response response = new BookOperations().invalidUpdateBookWithAuthorButNoAuthorId(newBookId, GlobVar.secondMockBookDescription, GlobVar.secondMockBookIsbn, GlobVar.secondMockBookNbOfPage, GlobVar.secondMockBookTitle, newAuthorName);
+        Response response = new BookOperations().invalidUpdateBookWithAuthorButNoAuthorId(BookId, GlobVar.secondMockBookDescription, GlobVar.secondMockBookIsbn, GlobVar.secondMockBookNbOfPage, GlobVar.secondMockBookTitle, AuthorName);
         
         assertEquals("The status code should be: 400",  400, response.statusCode());
         assertEquals("response body should be Book contained an author with no id field set", "Book contained an author with no id field set.", response.body().print());
@@ -224,7 +225,6 @@ public class PutTest {
     @Test 
     public void testInvalidPutNewAuthorPreviouslyExistingInSystemInExistingBookButNoAuthorId(){
         Integer bookId = GlobVar.mockBookId;
-        Integer badAuthorId = GlobVar.mockAuthorId + 1000;
         String badAuthorName = GlobVar.thirdMockAuthorName;
         
         Response response = new BookOperations().invalidUpdateABooksAuthors(bookId, badAuthorName);
@@ -239,7 +239,7 @@ public class PutTest {
         assertEquals("The status code should be: 200",  200, putAuthorResponse.statusCode());
         assertEquals("response body should be blank", "", putAuthorResponse.body().print());
         
-         Response unPutResponse =  new AuthorOperations().updateAuthor(GlobVar.mockAuthorName, GlobVar.mockAuthorId);
+        Response unPutResponse =  new AuthorOperations().updateAuthor(GlobVar.mockAuthorName, GlobVar.mockAuthorId);
         assertEquals("The status code should be: 200",  200, unPutResponse.statusCode());
         assertEquals("response body should be blank", "", unPutResponse.body().print());    
     }

@@ -9,15 +9,11 @@ import org.junit.Test;
 import static com.jayway.restassured.RestAssured.*;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.Response;
-import java.util.UUID;
 import static org.junit.Assert.*;
 import static com.jayway.restassured.path.json.JsonPath.*;
 import se.nackademin.rest.test.model.Book;
-import static com.jayway.restassured.RestAssured.*;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
-import se.nackademin.rest.test.model.AllBooks;
 import se.nackademin.rest.test.model.SingleBook;
 /**
  *
@@ -29,7 +25,7 @@ public class PostTest {
     public PostTest() {
     }
         
-    @BeforeClass
+    @BeforeClass //this method creates a dummy book, dummy author and adds the author to the book to be used during test executions
     public static void MaketheMockBookAndMockAuthor(){
         Response makeMocksResponse = BeforeAndAfterOperations.makeMockBookAndMockAuthor();
         assertEquals("The status code should be: 201",  201, makeMocksResponse.statusCode());
@@ -40,7 +36,7 @@ public class PostTest {
         assertEquals("response body should be blank",  "", addMockAuthorToMockBook.body().print());
     }
     
-    @AfterClass
+    @AfterClass //this method removes the dummies created by the previous method
     public static void RemovetheMockBookAndMockAuthor(){
         Response removeResponse = BeforeAndAfterOperations.removeTestBookAndTestAuthor();
         assertEquals("The status code should be: 204",  204, removeResponse.statusCode());  
@@ -48,7 +44,7 @@ public class PostTest {
     }
 
     
-    @Test
+    @Test //This test tries to post a new book to the system and verifies that we get the right responsecode (201), a blank responsebody and then verifies that the new book with included variables are in the system
     public void testPostBook(){
         Book book = new Book();
         book.setDescription(GlobVar.secondMockBookDescription);
@@ -67,23 +63,15 @@ public class PostTest {
         assertEquals("The books isbn should be: " + GlobVar.secondMockBookIsbn,  book.getIsbn(), verifyBook.getIsbn());       
         assertEquals("The books page count should be: " + GlobVar.secondMockBookNbOfPage,  book.getNbOfPage(), verifyBook.getNbOfPage());       
         
-        Response deleteResponse = new BookOperations().deleteLastBook();
-        assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
-        assertEquals("response body should be blank", "", deleteResponse.body().print());
+        if(response.statusCode() == 201){
+            Response deleteResponse = new BookOperations().deleteLastBook();
+            assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
+            assertEquals("response body should be blank", "", deleteResponse.body().print());
+        }
         
     }
     
-    public void testInvalidPostBook(){
-        Book book = new Book();
-        SingleBook singleBook = new SingleBook(book);
-        
-        Response response = given().contentType(ContentType.JSON).body(singleBook).log().all().post(GlobVar.BASE_URL+"books");
-        assertEquals("The status code should be: 400",  400, response.statusCode());
-        assertEquals("response body should be blank", "", response.body().print());
-        
-    }
-    
-    @Test //this method does not use the book class but is otherwise equivalent to testPostBookWithSpecificNewId and mainly exists to verify that the put-tests will work as intended
+    @Test //this test does not use the book class but is otherwise equivalent to testPostBookWithSpecificNewId and was written mainly to see if the api woulld allow calls of the text format that "BookOperations().createBookWithInputAndId" uses to be posted.
     public void testPostBookWithSpecificNewIdWithoutBookClass(){
         Response getResponse = new BookOperations().getAllBooks();
         Integer newId = GlobVar.mockBookId + 1;
@@ -97,14 +85,16 @@ public class PostTest {
         assertEquals("The books title should be: " + GlobVar.secondMockBookTitle,  GlobVar.secondMockBookTitle, verifyBook.getTitle());       
         assertEquals("The books isbn should be: " + GlobVar.secondMockBookIsbn,  GlobVar.secondMockBookIsbn, verifyBook.getIsbn());       
         assertEquals("The books page count should be: " + GlobVar.secondMockBookNbOfPage,  GlobVar.secondMockBookNbOfPage, verifyBook.getNbOfPage());       
-        assertEquals("The books page count should be: " + newId,  newId, verifyBook.getId()); 
+        assertEquals("The books id should be: " + newId,  newId, verifyBook.getId()); 
         
-        Response deleteResponse = new BookOperations().deleteLastBook();
-        assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
-        assertEquals("response body should be blank",  "", deleteResponse.body().print());
+        if(response.statusCode() == 201){
+            Response deleteResponse = new BookOperations().deleteLastBook();
+            assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
+            assertEquals("response body should be blank", "", deleteResponse.body().print());
+        }
     }
     
-    @Test
+    @Test //this test attempts to post a book with a specific bookid that does not previously exist in the system, verifies that we get the right statuscode (201) and blank response body. It then verifies that the new book is in the system
     public void testPostBookwithSpecificNewId(){
         Response getResponse = new BookOperations().getAllBooks();
         int newId = getResponse.jsonPath().getInt("books.book[-1].id") + 1;
@@ -127,12 +117,14 @@ public class PostTest {
         assertEquals("The books page count should be: " + GlobVar.secondMockBookNbOfPage,  book.getNbOfPage(), verifyBook.getNbOfPage());       
         assertEquals("The books page count should be: " + newId,  book.getId(), verifyBook.getId()); 
         
-        Response deleteResponse = new BookOperations().deleteLastBook();
-        assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
-        assertEquals("response body should be blank",  "", deleteResponse.body().print());
+        if(response.statusCode() == 201){
+            Response deleteResponse = new BookOperations().deleteLastBook();
+            assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
+            assertEquals("response body should be blank", "", deleteResponse.body().print());
+        }
     }
     
-    @Test
+    @Test //this test verifies that trying to post a book with a bookId that already exists in the system returns the right statuscode (400) and appropriate response body message
     public void testInvalidPostBookwithExistingID(){
         Response getResponse = new BookOperations().getAllBooks();
         int lastId = getResponse.jsonPath().getInt("books.book[-1].id");
@@ -150,7 +142,7 @@ public class PostTest {
     }
     
     
-    @Test 
+    @Test //this test attempts to post a book with an author that exists in the system then verifies that we get the right response statuscode (201) and a blank response body. then verifies that the new book (with author data) is in the system
     public void testPostBookWithAuthor(){
         BookOperations bookOperations = new BookOperations();
         AuthorOperations authorOperations = new AuthorOperations();
@@ -185,13 +177,15 @@ public class PostTest {
         assertEquals(expectedAuthorName, verifyAuthorName); 
         assertEquals(expectedAuthorId, verifyAuthorId); 
         
-        Response deleteResponse = new BookOperations().deleteLastBook();
-        assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
-        assertEquals("response body should be blank",  "", deleteResponse.body().print());
+        if(postResponse.statusCode() == 201){
+            Response deleteResponse = new BookOperations().deleteLastBook();
+            assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
+            assertEquals("response body should be blank", "", deleteResponse.body().print());
+        }
     }
     
     /*
-    @Test //This test doesnt work because im not sure how to work with a book class author-object
+    @Test //This test remains incomplete because im not sure how to work with a book.class author-object
     public void testPostBookWithAuthorUsingBookClass(){
         Response getResponse = new BookOperations().getAllBooks();
         int lastId = getResponse.jsonPath().getInt("books.book[-1].id");
@@ -227,19 +221,7 @@ public class PostTest {
     }
    */
     
-    @Test 
-    public void testInvalidPostBookWithNonExistingAuthor(){
-        Response authorResponse = new AuthorOperations().getAuthor(GlobVar.mockAuthorId); 
-        String authorName = "Bad Author";
-        Integer authorId = authorResponse.body().jsonPath().getInt("author.id") +1;
-
-        Response postResponse = new BookOperations().createBookWithAuthor(GlobVar.secondMockBookDescription, GlobVar.secondMockBookIsbn, GlobVar.secondMockBookNbOfPage, GlobVar.secondMockBookTitle, authorName, authorId);
-        assertEquals("The status code should be: 400",  400, postResponse.statusCode());
-        assertEquals("response body should be Author does not exist in database.",  "Author does not exist in database.", postResponse.body().print());
-
-    }
-    
-    @Test 
+    @Test //this test verifies that trying to post a book with an author but no authorId returns the right statuscode (400) and appropriate response body message
     public void testInvalidPostBookWithAuthorNameButNoAuthorId(){
         Response authorResponse = new AuthorOperations().getAuthor(GlobVar.mockAuthorId); 
         String authorName = authorResponse.body().jsonPath().getString("author.name");
@@ -248,7 +230,7 @@ public class PostTest {
         assertEquals("response body should be Book contained an author with no id field set.",  "Book contained an author with no id field set.", postResponse.body().print());
     }
     
-    @Test 
+    @Test //this test verifies that trying to post a new book with an authorId that does not already exists in the system returns the right statuscode (400) and appropriate response body message
     public void testInvalidPostBookWithAuthorNameButWrongAuthorId(){
         Response authorResponse = new AuthorOperations().getAuthor(GlobVar.mockAuthorId); 
         String authorName = authorResponse.body().jsonPath().getString("author.name");
@@ -258,7 +240,7 @@ public class PostTest {
         assertEquals("response body should be Author does not exist in database.",  "Author does not exist in database.", postResponse.body().print());
     }
     
-    @Test 
+    @Test //this test verifies that trying to post a new book with a valid authorId but the wrong authorName for that id returns the right statuscode (400) and appropriate response body message
     public void testInvalidPostBookWithAuthorIDButWrongAuthorName(){
         Response authorResponse = new AuthorOperations().getAuthor(GlobVar.mockAuthorId); 
         String authorName = authorResponse.body().jsonPath().getString("author.name") + "blarg"; 
@@ -291,6 +273,7 @@ public class PostTest {
     public void testPostAuthorToBook(){
         BookOperations bookOperations = new BookOperations();
         AuthorOperations authorOperations = new AuthorOperations();
+        
         //this part makes a new book and verifies that it was created)
         Response postResponse = bookOperations.createBookWithInput(GlobVar.secondMockBookDescription, GlobVar.secondMockBookIsbn, GlobVar.secondMockBookNbOfPage, GlobVar.secondMockBookTitle);
         assertEquals("status code should be 201",  201, postResponse.statusCode());
@@ -309,34 +292,38 @@ public class PostTest {
         assertEquals(expectedDescription, fetchedDescription);
         assertEquals(expectedIsbn, fetchedIsbn);      
         
-        //this part adds an existing author to the new book and verifies that he has been added to said book
-        Response authorResponse = authorOperations.getAuthor(GlobVar.mockAuthorId); 
-        String authorName = authorResponse.body().jsonPath().getString("author.name");
-        Integer authorId = authorResponse.body().jsonPath().getInt("author.id");
-        Integer newBookId = new BookOperations().getLastBook().jsonPath().getInt("book.id");
+        //this part adds an existing author to the new book if a new book was successfully created and verifies that the author has been added to said book
+        if(postResponse.statusCode() == 201){
+            Response authorResponse = authorOperations.getAuthor(GlobVar.mockAuthorId); 
+            String authorName = authorResponse.body().jsonPath().getString("author.name");
+            Integer authorId = authorResponse.body().jsonPath().getInt("author.id");
+            Integer newBookId = new BookOperations().getLastBook().jsonPath().getInt("book.id");
         
-        Response postAuthorToBookResponse = new BookOperations().addAuthorToBook(authorName, authorId, newBookId);
-        assertEquals("The status code should be: 200",  200, postAuthorToBookResponse.statusCode());
-        assertEquals("response body should be blank", "", postAuthorToBookResponse.body().print());  
+            Response postAuthorToBookResponse = new BookOperations().addAuthorToBook(authorName, authorId, newBookId);
+            assertEquals("The status code should be: 200",  200, postAuthorToBookResponse.statusCode());
+            assertEquals("response body should be blank", "", postAuthorToBookResponse.body().print());  
         
-        Response getAuthorResponse = bookOperations.getBookById(newBookId);
-        String verifyAuthorName = getAuthorResponse.jsonPath().getString("book.author.name");
-        Integer verifyAuthorId = getAuthorResponse.jsonPath().getInt("book.author.id");
+            Response getAuthorResponse = bookOperations.getBookById(newBookId);
+            String verifyAuthorName = getAuthorResponse.jsonPath().getString("book.author.name");
+            Integer verifyAuthorId = getAuthorResponse.jsonPath().getInt("book.author.id");
         
-        assertEquals(authorName, verifyAuthorName);
-        assertEquals(authorId, verifyAuthorId);
+            assertEquals(authorName, verifyAuthorName);
+            assertEquals(authorId, verifyAuthorId);
+        }
         
-        // this bit cleans up the mess!
-        Response deleteResponse = new BookOperations().deleteLastBook();
-        assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
-        assertEquals("response body should be blank", "", deleteResponse.body().print());
-        
+        // this bit cleans up the mess if there is a mess to clean up
+        if(postResponse.statusCode() == 201){
+            Response deleteResponse = new BookOperations().deleteLastBook();
+            assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
+            assertEquals("response body should be blank", "", deleteResponse.body().print());
+        }
     }
     
     @Test
     public void testInvalidPostAuthorToBookTwice(){
         BookOperations bookOperations = new BookOperations();
         AuthorOperations authorOperations = new AuthorOperations();
+        
         //this part makes a new book and verifies that it was created)
         Response postResponse = bookOperations.createBookWithInput(GlobVar.secondMockBookDescription, GlobVar.secondMockBookIsbn, GlobVar.secondMockBookNbOfPage, GlobVar.secondMockBookTitle);
         assertEquals("status code should be 201",  201, postResponse.statusCode());
@@ -355,37 +342,42 @@ public class PostTest {
         assertEquals(expectedDescription, fetchedDescription);
         assertEquals(expectedIsbn, fetchedIsbn);      
         
-        //this part adds an existing author to the new book and verifies that he has been added to said book
-        Response authorResponse = authorOperations.getAuthor(GlobVar.mockAuthorId); 
-        String authorName = authorResponse.body().jsonPath().getString("author.name");
-        Integer authorId = authorResponse.body().jsonPath().getInt("author.id");
-        Integer newBookId = new BookOperations().getLastBook().jsonPath().getInt("book.id");
+        //this part adds an existing author to the new book if a new book was successfully created and verifies that the author has been added to said book
+        if(postResponse.statusCode() == 201){
+            Response authorResponse = authorOperations.getAuthor(GlobVar.mockAuthorId); 
+            String authorName = authorResponse.body().jsonPath().getString("author.name");
+            Integer authorId = authorResponse.body().jsonPath().getInt("author.id");
+            Integer newBookId = new BookOperations().getLastBook().jsonPath().getInt("book.id");
         
-        Response postAuthorToBookResponse = new BookOperations().addAuthorToBook(authorName, authorId, newBookId);
-        assertEquals("The status code should be: 200",  200, postAuthorToBookResponse.statusCode());
-        assertEquals("response body should be blank", "", postAuthorToBookResponse.body().print());  
+            Response postAuthorToBookResponse = new BookOperations().addAuthorToBook(authorName, authorId, newBookId);
+            assertEquals("The status code should be: 200",  200, postAuthorToBookResponse.statusCode());
+            assertEquals("response body should be blank", "", postAuthorToBookResponse.body().print());  
         
-        Response getAuthorResponse = bookOperations.getBookById(newBookId);
-        String verifyAuthorName = getAuthorResponse.jsonPath().getString("book.author.name");
-        Integer verifyAuthorId = getAuthorResponse.jsonPath().getInt("book.author.id");
+            Response getAuthorResponse = bookOperations.getBookById(newBookId);
+            String verifyAuthorName = getAuthorResponse.jsonPath().getString("book.author.name");
+            Integer verifyAuthorId = getAuthorResponse.jsonPath().getInt("book.author.id");
         
-        assertEquals(authorName, verifyAuthorName);
-        assertEquals(authorId, verifyAuthorId);
-        //this part tries to post the same author to the book again which should not work
-        Response postAuthorToBookTwiceResponse = new BookOperations().addAuthorToBook(authorName, authorId, newBookId);
-        assertEquals("The status code should be: 400",  400, postAuthorToBookTwiceResponse.statusCode());
-        assertEquals("response body should be Author is already author of this book.", "Author is already author of this book.", postAuthorToBookTwiceResponse.body().print());
+            assertEquals(authorName, verifyAuthorName);
+            assertEquals(authorId, verifyAuthorId);
+            //this part tries to post the same author to the book again which should not work
+            Response postAuthorToBookTwiceResponse = new BookOperations().addAuthorToBook(authorName, authorId, newBookId);
+            assertEquals("The status code should be: 400",  400, postAuthorToBookTwiceResponse.statusCode());
+            assertEquals("response body should be Author is already author of this book.", "Author is already author of this book.", postAuthorToBookTwiceResponse.body().print());
+        }
         
-        // this bit cleans up the mess!
-        Response deleteResponse = new BookOperations().deleteLastBook();
-        assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());  
-        assertEquals("response body should be blank", "", deleteResponse.body().print());
+        // this bit cleans up the mess if there is a mess to clean up
+        if(postResponse.statusCode() == 201){
+            Response deleteResponse = new BookOperations().deleteLastBook();
+            assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
+            assertEquals("response body should be blank", "", deleteResponse.body().print());
+        }
     }
     
     @Test
     public void testInvalidPostAuthorToBookWithNoAuthorId(){
         BookOperations bookOperations = new BookOperations();
         AuthorOperations authorOperations = new AuthorOperations();
+        
         //this part makes a new book and verifies that it was created)
         Response postResponse = bookOperations.createBookWithInput(GlobVar.secondMockBookDescription, GlobVar.secondMockBookIsbn, GlobVar.secondMockBookNbOfPage, GlobVar.secondMockBookTitle);
         assertEquals("status code should be 201",  201, postResponse.statusCode());
@@ -404,19 +396,22 @@ public class PostTest {
         assertEquals(expectedDescription, fetchedDescription);
         assertEquals(expectedIsbn, fetchedIsbn);      
         
-        //this part tries adding an author without his authorId to the new book which should not work
-        Response authorResponse = authorOperations.getAuthor(GlobVar.mockAuthorId); 
-        String authorName = authorResponse.body().jsonPath().getString("author.name");
-        Integer authorId = authorResponse.body().jsonPath().getInt("author.id");
-        Integer newBookId = new BookOperations().getLastBook().jsonPath().getInt("book.id");
+        //this part tries, if a new book was created, adding an author without his authorId to the new book and verifies that this does not work
+        if(postResponse.statusCode() == 201){
+            Response authorResponse = authorOperations.getAuthor(GlobVar.mockAuthorId); 
+            String authorName = authorResponse.body().jsonPath().getString("author.name");
+            Integer newBookId = new BookOperations().getLastBook().jsonPath().getInt("book.id");
         
-        Response postAuthorToBookResponse = new BookOperations().addAuthorToBookWithoutAuthorId(authorName, newBookId);
-        assertEquals("The status code should be: 400",  400, postAuthorToBookResponse.statusCode());
-        assertEquals("response body should be Author must have id field set.", "Author must have id field set.", postAuthorToBookResponse.body().print());
-        
-        // this bit cleans up the mess!
-        Response deleteResponse = new BookOperations().deleteLastBook();
-        assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());  
+            Response postAuthorToBookResponse = new BookOperations().invalidAddAuthorToBookWithoutAuthorId(authorName, newBookId);
+            assertEquals("The status code should be: 400",  400, postAuthorToBookResponse.statusCode());
+            assertEquals("response body should be Author must have id field set.", "Author must have id field set.", postAuthorToBookResponse.body().print());
+        }
+        // this bit cleans up the mess if there is a mess to clean up
+        if(postResponse.statusCode() == 201){
+            Response deleteResponse = new BookOperations().deleteLastBook();
+            assertEquals("The status code should be: 204",  204, deleteResponse.statusCode());
+            assertEquals("response body should be blank", "", deleteResponse.body().print());
+        }
     }
     
     @Test
@@ -450,9 +445,12 @@ public class PostTest {
         String fetchedName = getResponse.body().jsonPath().getString("authors.author[-1].name");
         assertEquals(expectedName, fetchedName);
         
-        Response delResponse = authorOperations.deleteLastAuthor();
-        assertEquals("status code should be 204",  204, delResponse.statusCode());
-        assertEquals("response body should be blank", "", delResponse.body().print());
+        if(postResponse.statusCode() == 201){
+            Response delResponse = authorOperations.deleteLastAuthor();
+            assertEquals("status code should be 204",  204, delResponse.statusCode());
+            assertEquals("response body should be blank", "", delResponse.body().print());
+        }
+        
     }
     
     @Test
@@ -473,9 +471,11 @@ public class PostTest {
         assertEquals(expectedName, fetchedAuthorName);
         assertEquals(expectedId, fetchedAuthorId);
         
-        Response delResponse = authorOperations.deleteLastAuthor();
-        assertEquals("status code should be 204",  204, delResponse.statusCode());
-        assertEquals("response body should be blank", "", delResponse.body().print());
+        if(postResponse.statusCode() == 201){
+            Response delResponse = authorOperations.deleteLastAuthor();
+            assertEquals("status code should be 204",  204, delResponse.statusCode());
+            assertEquals("response body should be blank", "", delResponse.body().print());
+        }
     }
     
     @Test
