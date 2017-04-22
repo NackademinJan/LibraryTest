@@ -18,29 +18,29 @@ import se.nackademin.rest.test.model.SingleBook;
 public class BeforeAndAfterOperations {
 
     
-    public static Response makeMockBookAndMockAuthor(){
-        Response postBookResponse = new BookOperations().createBookWithInput(GlobVar.mockBookDescription, GlobVar.mockBookIsbn, GlobVar.mockBookNbOfPage, GlobVar.mockBookTitle);
+    public static Response makeDummyBookAndDummyAuthor(){
+        Response postBookResponse = new BookOperations().createBookWithInput(GlobVar.dummyBookDescription, GlobVar.dummyBookIsbn, GlobVar.dummyBookNbOfPage, GlobVar.dummyBookTitle);
         if(!( 201 == postBookResponse.getStatusCode() )) return postBookResponse;
         Response lastBookResponse = new BookOperations().getAllBooks();
-        GlobVar.mockBookId = lastBookResponse.jsonPath().getInt("books.book[-1].id");
+        GlobVar.dummyBookId = lastBookResponse.jsonPath().getInt("books.book[-1].id");
         
-        Response postAuthorResponse = new AuthorOperations().createAuthor(GlobVar.mockAuthorName);
+        Response postAuthorResponse = new AuthorOperations().createAuthor(GlobVar.dummyAuthorName);
         if(!( 201 == postAuthorResponse.getStatusCode() )) return postAuthorResponse;
         Response authorResponse = new AuthorOperations().getAllAuthors();
-        GlobVar.mockAuthorId = authorResponse.jsonPath().getInt("authors.author[-1].id");
+        GlobVar.dummyAuthorId = authorResponse.jsonPath().getInt("authors.author[-1].id");
         return postAuthorResponse;
         
     } 
-    public static Response addMockAuthorToMockBook(){
-        Response authorOfBookResponse = new BookOperations().addAuthorToBook(GlobVar.mockAuthorName, GlobVar.mockAuthorId, GlobVar.mockBookId);  
+    public static Response addDummyAuthorToDummyBook(){
+        Response authorOfBookResponse = new BookOperations().addAuthorToBook(GlobVar.dummyAuthorName, GlobVar.dummyAuthorId, GlobVar.dummyBookId);  
         return authorOfBookResponse; 
     }
    
-    public static Response removeTestBookAndTestAuthor(){
-        Response deleteBookResponse = new BookOperations().deleteBook(GlobVar.mockBookId);
+    public static Response removeDummyBookAndDummyAuthor(){
+        Response deleteBookResponse = new BookOperations().deleteBook(GlobVar.dummyBookId);
         if(!( 204 == deleteBookResponse.getStatusCode() )) return deleteBookResponse;
         
-        Response deleteAuthorResponse = new AuthorOperations().deleteAuthor(GlobVar.mockAuthorId);
+        Response deleteAuthorResponse = new AuthorOperations().deleteAuthor(GlobVar.dummyAuthorId);
         return deleteAuthorResponse;
     }
     

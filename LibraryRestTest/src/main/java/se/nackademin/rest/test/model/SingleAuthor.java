@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Objects;
 
 /**
- *
+ * Note, this class does not work as intended currently due to difficulties in parsing json vauge objects to two or more object types
  * @author testautomatisering
  */
 public class SingleAuthor {

@@ -9,16 +9,11 @@ import org.junit.Test;
 import static com.jayway.restassured.RestAssured.*;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.Response;
-import java.util.UUID;
 import static org.junit.Assert.*;
 import static com.jayway.restassured.path.json.JsonPath.*;
-import se.nackademin.rest.test.model.Book;
-import static com.jayway.restassured.RestAssured.*;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
-import se.nackademin.rest.test.model.AllBooks;
-import se.nackademin.rest.test.model.SingleBook;
+
 /**
  *
  * @author testautomatisering
@@ -26,25 +21,26 @@ import se.nackademin.rest.test.model.SingleBook;
 public class DeleteTest {
     
     @BeforeClass //this method creates a dummy book, dummy author and adds the author to the book to be used during test executions
-    public static void MaketheMockBookAndMockAuthor(){
-        Response makeMocksResponse = BeforeAndAfterOperations.makeMockBookAndMockAuthor();
-        assertEquals("The status code should be: 201",  201, makeMocksResponse.statusCode());
-        assertEquals("response body should be blank",  "", makeMocksResponse.body().print());
+    public static void MaketheDummyBookAndDummyAuthor(){
+        Response makeDummysResponse = BeforeAndAfterOperations.makeDummyBookAndDummyAuthor();
+        assertEquals("The status code should be: 201",  201, makeDummysResponse.statusCode());
+        assertEquals("response body should be blank",  "", makeDummysResponse.body().print());
         
-        Response addMockAuthorToMockBook = BeforeAndAfterOperations.addMockAuthorToMockBook();
-        assertEquals("The status code should be: 200",  200, addMockAuthorToMockBook.statusCode());
-        assertEquals("response body should be blank",  "", addMockAuthorToMockBook.body().print());
+        Response addDummyAuthorToDummyBook = BeforeAndAfterOperations.addDummyAuthorToDummyBook();
+        assertEquals("The status code should be: 200",  200, addDummyAuthorToDummyBook.statusCode());
+        assertEquals("response body should be blank",  "", addDummyAuthorToDummyBook.body().print());
     }
     
     @AfterClass //this method removes the dummies created by the previous method
-    public static void RemovetheMockBookAndMockAuthor(){
-        Response removeResponse = BeforeAndAfterOperations.removeTestBookAndTestAuthor();
+    public static void RemovetheDummyBookAndDummyAuthor(){
+        Response removeResponse = BeforeAndAfterOperations.removeDummyBookAndDummyAuthor();
         assertEquals("The status code should be: 204",  204, removeResponse.statusCode());  
         assertEquals("response body should be blank",  "", removeResponse.body().print());
     }
     
     
-    @Test
+    
+    @Test //this test verifies that you cannot perform a delete request to delete all books
     public void testForbiddenDeleteBooks(){
         String resourceName = "books";
         Response response = given().accept(ContentType.JSON).delete(GlobVar.BASE_URL+resourceName);
@@ -54,16 +50,16 @@ public class DeleteTest {
     
     
     
-    @Test 
+    @Test //this test attempts to create a new dummy book with dummy author attatched and then deletes the book, it then verifies that we got the right response statuscode (204), a blank response body and then checks that the book is no longer in the system but the author still is
     public void testDeleteBookWithAuthor(){
         BookOperations bookOperations = new BookOperations();
         AuthorOperations authorOperations = new AuthorOperations();
         
-        Response authorResponse = authorOperations.getAuthor(GlobVar.mockAuthorId); 
+        Response authorResponse = authorOperations.getAuthor(GlobVar.dummyAuthorId); 
         String authorName = authorResponse.body().jsonPath().getString("author.name");
         Integer authorId = authorResponse.body().jsonPath().getInt("author.id");
         
-        Response postResponse = bookOperations.createBookWithAuthor(GlobVar.secondMockBookDescription, GlobVar.secondMockBookIsbn, GlobVar.secondMockBookNbOfPage, GlobVar.secondMockBookTitle, authorName, authorId);
+        Response postResponse = bookOperations.createBookWithAuthor(GlobVar.secondDummyBookDescription, GlobVar.secondDummyBookIsbn, GlobVar.secondDummyBookNbOfPage, GlobVar.secondDummyBookTitle, authorName, authorId);
         assertEquals("status code should be 201",  201, postResponse.statusCode());
         assertEquals("response body should be blank", "", postResponse.body().prettyPrint());
         
@@ -104,7 +100,7 @@ public class DeleteTest {
             assertEquals("response body should be blank",  "", postDeleteBookResponse.body().print());
         
             //and this part verifies that the author was not deleted from the system along with the book!
-            Response postDeleteBookButNotAuthorResponse = authorOperations.getAuthor(GlobVar.mockAuthorId); 
+            Response postDeleteBookButNotAuthorResponse = authorOperations.getAuthor(GlobVar.dummyAuthorId); 
             assertEquals("The status code should be: 200",  200, postDeleteBookButNotAuthorResponse.statusCode());
             assertEquals("response body should be: " + authorName,  authorName, postDeleteBookButNotAuthorResponse.body().jsonPath().getString("author.name"));
             Integer postDeleteBookButNotAuthorId = postDeleteBookButNotAuthorResponse.body().jsonPath().getInt("author.id");
@@ -112,11 +108,11 @@ public class DeleteTest {
         }
     }
     
-    @Test 
+    @Test //this test attempts to create a new dummy book with no author attatched and then deletes the book, it then verifies that we got the right response statuscode (204), a blank response body and then checks that the book is no longer in the system
     public void testDeleteBookWithNoAuthor(){
         BookOperations bookOperations = new BookOperations();
         
-        Response postResponse = bookOperations.createBookWithInput(GlobVar.secondMockBookDescription, GlobVar.secondMockBookIsbn, GlobVar.secondMockBookNbOfPage, GlobVar.secondMockBookTitle);
+        Response postResponse = bookOperations.createBookWithInput(GlobVar.secondDummyBookDescription, GlobVar.secondDummyBookIsbn, GlobVar.secondDummyBookNbOfPage, GlobVar.secondDummyBookTitle);
         assertEquals("status code should be 201",  201, postResponse.statusCode());
         assertEquals("response body should be blank", "", postResponse.body().prettyPrint());
         
@@ -152,7 +148,7 @@ public class DeleteTest {
         }
     }
     
-    @Test 
+    @Test //this test verifies that the book we are trying to delete does not exist in the system, that we cannot delete a book that does not exist in the system, that we get the appropriate status code (404) for trying along with a blank response body
     public void testInvalidDeleteBookWithNoExistingBook(){
         
         //this part veirfies that the book we are about to delete does not exist in the system
@@ -171,24 +167,24 @@ public class DeleteTest {
     }
     
     
-    @Test
+    @Test //this test verifies that we cannot perform a delete request to delete a book by its author's authorId
     public void testForbiddenDeleteBooksByAuthorId(){
-        String resourceName = "books/byauthor/"+GlobVar.mockAuthorId;
+        String resourceName = "books/byauthor/"+GlobVar.dummyAuthorId;
         Response response = given().accept(ContentType.JSON).delete(GlobVar.BASE_URL+resourceName);
         assertEquals("The status code should be: 405, method not allowed",  405, response.statusCode());
         assertEquals("response body should be blank",  "", response.body().print());
     }
     
-    @Test
+    @Test //this test verifies that we cannot perform a delete request to delete an author by (one of) his book's bookId
     public void testForbiddenDeleteAuthorByBookId(){
-        String resourceName = "books/"+GlobVar.mockAuthorId +"/authors";
+        String resourceName = "books/"+GlobVar.dummyAuthorId +"/authors";
         Response response = given().accept(ContentType.JSON).delete(GlobVar.BASE_URL+resourceName);
         assertEquals("The status code should be: 405, method not allowed",  405, response.statusCode());
         assertEquals("response body should be blank",  "", response.body().print());
     }
     
     
-    @Test
+    @Test //this test verifies that we cannot perform a delete request to delete all authors
     public void testForbiddenDeleteAuthors(){
         String resourceName = "authors";
         Response response = given().accept(ContentType.JSON).delete(GlobVar.BASE_URL+resourceName);
@@ -198,11 +194,11 @@ public class DeleteTest {
     
     
     
-    @Test
+    @Test // this test attempts to create a dummy author and then delete that author specified by its authorId if one was created. it also verifies that we get the appropriate response statuscode (204) and blank response body
     public void testDeleteAuthorById(){
         AuthorOperations authorOperations = new AuthorOperations();
         
-        Response postResponse = authorOperations.createAuthor("Another MockAuthor");
+        Response postResponse = authorOperations.createAuthor("Another DummyAuthor");
         assertEquals("status code should be 201",  201, postResponse.statusCode());
         assertEquals("response body should be blank", "", postResponse.body().print());
         
@@ -228,7 +224,7 @@ public class DeleteTest {
         }
     }
     
-    @Test
+    @Test //this test verifies that the author we are about to try to delete does not exist in the system already, then tries to delete that nonexistant author and verifies that we get the right response statuscode (404) and a blank response body
     public void testInvalidDeleteAuthorById(){
         //this part veirfies that the Author we are about to delete does not exist in the system
         Response authorResponse = new AuthorOperations().getAllAuthors();
@@ -243,8 +239,9 @@ public class DeleteTest {
             assertEquals("The status code should be: 404",  404, deleteResponse.statusCode());
             assertEquals("response body should be blank",  "", deleteResponse.body().print());
         }
-        
     }
+    
+    
     
 }
     
